@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Baby's Birthday Bash</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Baloo 2', cursive;
+      overflow: hidden;
+      background: #fbeed6;
+      position: relative;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #fff0e1;
+      border-radius: 10px;
+    }
+    h1, #message, .greeting, .instruction {
+      position: absolute;
+      width: 100%;
+      z-index: 1;
+      text-align: center;
+      text-shadow: 0 0 3px white;
+    }
+    h1 {
+      top: 20px;
+      font-size: 2em;
+      color: #ff4081;
+    }
+    .greeting {
+      bottom: 90px;
+      left: 0;
+      font-size: 1.3em;
+      color: #d6336c;
+    }
+    .instruction {
+      bottom: 60px;
+      left: 0;
+      font-size: 1.2em;
+      color: #333;
+    }
+    #message {
+      bottom: 20px;
+      font-size: 1.4em;
+      color: #ff4081;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎉 Happy Birthday, Dishaaa 🎂</h1>
+  <p class="greeting">I love you soo muchh💖</p>
+  <p class="instruction">Blow (click) the candles 🎂🕯️</p>
+  <canvas id="cakeCanvas"></canvas>
+  <div id="message"></div>
+
+  <!-- 🎵 Audio using direct Dropbox link -->
+  <audio id="birthdayMusic" preload="auto">
+  <source src="https://www.dropbox.com/scl/fi/0073a0nhefkzjbysld9dd/bdysong-online-audio-converter.com.mp3?rlkey=4n4gkravj1gnhohdjjwciu22z&raw=1" type="audio/mpeg">
+  Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    const canvas = document.getElementById("cakeCanvas");
+    const ctx = canvas.getContext("2d");
+    const messageBox = document.getElementById("message");
+    const music = document.getElementById("birthdayMusic");
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    let hue = 0;
+    function animateBackground() {
+      canvas.style.backgroundColor = `hsl(${hue}, 90%, 95%)`;
+      hue += 0.5;
+      requestAnimationFrame(animateBackground);
+    }
+    animateBackground();
+
+    let confetti = [];
+    let balloons = [];
+    const candles = [];
+
+    function centerCakeSetup() {
+      const centerX = canvas.width / 2;
+      const cakeBottomY = canvas.height / 2 + 50;
+      return {
+        centerX,
+        cakeBottomY,
+        layers: [
+          { width: 200, height: 40, offsetY: 0, color: "#8B4513" },
+          { width: 180, height: 40, offsetY: 40, color: "#FFFFFF" },
+          { width: 160, height: 40, offsetY: 80, color: "#8B4513" },
+          { width: 140, height: 30, offsetY: 110, color: "#FFFFFF" }
+        ]
+      };
+    }
+
+    function drawLayer(centerX, cakeBottomY, layer) {
+      const x = centerX - layer.width / 2;
+      const y = cakeBottomY - layer.offsetY;
+      ctx.fillStyle = layer.color;
+      ctx.beginPath();
+      ctx.moveTo(x + 10, y);
+      ctx.lineTo(x + layer.width - 10, y);
+      ctx.quadraticCurveTo(x + layer.width, y, x + layer.width, y + 10);
+      ctx.lineTo(x + layer.width, y + layer.height - 10);
+      ctx.quadraticCurveTo(x + layer.width, y + layer.height, x + layer.width - 10, y + layer.height);
+      ctx.lineTo(x + 10, y + layer.height);
+      ctx.quadraticCurveTo(x, y + layer.height, x, y + layer.height - 10);
+      ctx.lineTo(x, y + 10);
+      ctx.quadraticCurveTo(x, y, x + 10, y);
+      ctx.fill();
+    }
+
+    function setupCandles(centerX, cakeBottomY) {
+      candles.length = 0;
+      for (let i = -60; i <= 60; i += 60) {
+        candles.push({ x: centerX + i, y: cakeBottomY - 140, flameSize: 5 });
+      }
+    }
+
+    function drawCandle(candle) {
+      ctx.fillStyle = "white";
+      ctx.fillRect(candle.x - 5, candle.y, 10, 30);
+      ctx.strokeStyle = "red";
+      for (let i = 0; i < 30; i += 6) {
+        ctx.beginPath();
+        ctx.moveTo(candle.x - 5, candle.y + i);
+        ctx.lineTo(candle.x + 5, candle.y + i);
+        ctx.stroke();
+      }
+      candle.flameSize = 5 + Math.random() * 3;
+      ctx.beginPath();
+      ctx.arc(candle.x, candle.y - 5, candle.flameSize, 0, Math.PI * 2);
+      ctx.fillStyle = "orange";
+      ctx.fill();
+    }
+
+    function generateConfetti() {
+      for (let i = 0; i < 100; i++) {
+        confetti.push({
+          x: Math.random() * canvas.width,
+          y: canvas.height,
+          dx: Math.random() * 4 - 2,
+          dy: Math.random() * -5 - 2,
+          color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+          size: Math.random() * 6 + 2,
+        });
+      }
+    }
+
+    function drawConfetti() {
+      confetti.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        p.x += p.dx;
+        p.y += p.dy;
+        p.dy += 0.2;
+      });
+    }
+
+    function createBalloon() {
+      balloons.push({
+        x: Math.random() * canvas.width,
+        y: canvas.height + 50,
+        radius: 15 + Math.random() * 10,
+        color: `hsl(${Math.random() * 360}, 100%, 70%)`,
+        speed: Math.random() * 1.5 + 0.5
+      });
+    }
+    setInterval(createBalloon, 800);
+
+    function drawBalloons() {
+      balloons.forEach((b, index) => {
+        b.y -= b.speed;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fillStyle = b.color;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(b.x, b.y + b.radius);
+        ctx.lineTo(b.x, b.y + b.radius + 20);
+        ctx.strokeStyle = "#555";
+        ctx.stroke();
+        if (b.y + b.radius < 0) {
+          balloons.splice(index, 1);
+        }
+      });
+    }
+
+    function drawScene() {
+      resizeCanvas();
+      const { centerX, cakeBottomY, layers } = centerCakeSetup();
+      setupCandles(centerX, cakeBottomY);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      layers.forEach(layer => drawLayer(centerX, cakeBottomY, layer));
+      candles.forEach(drawCandle);
+      drawConfetti();
+      drawBalloons();
+      requestAnimationFrame(drawScene);
+    }
+    drawScene();
+
+    canvas.addEventListener("click", function(event) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+      candles.forEach(c => {
+        if (
+          mouseX >= c.x - 5 &&
+          mouseX <= c.x + 5 &&
+          mouseY >= c.y &&
+          mouseY <= c.y + 30
+        ) {
+          messageBox.innerText = "HAPPYY BIRTHDAY BABYYY";
+          generateConfetti();
+          music.play();
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
